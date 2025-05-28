@@ -1,43 +1,60 @@
-// utils.js - General helper functions used across the app
+// utils.js
 
-export function getFormattedDate() {
-    let today = new Date();
-    return today.toLocaleDateString("en-US", { 
-        weekday: "long", year: "numeric", month: "long", day: "numeric" 
-    });
-}
-
-export function getPrayerEmoji(prayer) {
-    const prayerEmojis = {
-        "Fajr": "🌅",
-        "Sunrise": "🌄",
-        "Dhuhr": "☀️",
-        "Asr": "🌇",
-        "Maghrib": "🌆",
-        "Isha": "🌙"
+function getPrayerEmoji(prayerName) {
+    const emojis = {
+        Fajr: "🌅",
+        Sunrise: "🌄",
+        Dhuhr: "☀️",
+        Asr: "🌇",
+        Maghrib: "🌆",
+        Isha: "🌙",
+        Imsak: "🕓",
+        Midnight: "🌃",
+        Firstthird: "🌌",
+        Lastthird: "🌠"
     };
-    return prayerEmojis[prayer] || "";
+    return emojis[prayerName] || "🕒";
 }
 
-export function getClosestPrayer(prayerTimes, exclude = []) {
-    let now = new Date();
-    let closestPrayer = null;
-    let closestPrayerTime = null;
+function getClosestPrayer(prayerTimes) {
+    const now = new Date();
+    let closest = null;
+    let minDiff = Infinity;
 
-    Object.entries(prayerTimes).forEach(([prayer, time]) => {
-        if (exclude.includes(prayer)) return;
+    for (let [name, time] of Object.entries(prayerTimes)) {
+        if (["Sunrise", "Imsak", "Midnight", "Firstthird", "Lastthird"].includes(name)) continue;
 
         let [hour, minute] = time.split(":").map(Number);
         let prayerTime = new Date();
-        prayerTime.setHours(hour);
-        prayerTime.setMinutes(minute);
-        prayerTime.setSeconds(0);
+        prayerTime.setHours(hour, minute, 0);
 
-        if (closestPrayerTime === null || Math.abs(prayerTime - now) < Math.abs(closestPrayerTime - now)) {
-            closestPrayer = prayer;
-            closestPrayerTime = prayerTime;
+        let diff = Math.abs(prayerTime - now);
+        if (diff < minDiff) {
+            minDiff = diff;
+            closest = { name, time };
         }
-    });
+    }
 
-    return closestPrayer;
+    return closest;
 }
+
+function formatHijriDate(hijriObj) {
+    return `${hijriObj.day} ${hijriObj.month.en} ${hijriObj.year} AH`;
+}
+
+function formatGregorianDate(dateObj) {
+    const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
+    return new Date(dateObj.gregorian).toLocaleDateString("en-US", options);
+}
+
+function isExtraPrayer(prayerName) {
+    return ["Imsak", "Midnight", "Firstthird", "Lastthird"].includes(prayerName);
+}
+
+export {
+    getPrayerEmoji,
+    getClosestPrayer,
+    formatHijriDate,
+    formatGregorianDate,
+    isExtraPrayer
+};
